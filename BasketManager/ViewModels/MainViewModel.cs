@@ -18,6 +18,9 @@ namespace BasketManager.ViewModels
         [ObservableProperty]
         private bool _estaEnModoClasificatorio;
 
+        public ObservableCollection<Jugador> EquipoA { get; set; } = new();
+        public ObservableCollection<Jugador> EquipoB { get; set; } = new();
+
         [ObservableProperty]
         private string _nombreNuevo = string.Empty;
 
@@ -85,6 +88,19 @@ namespace BasketManager.ViewModels
             {
                 ListaEspera.Add(j);
             }
+        }
+
+        [RelayCommand]
+        public async Task IniciarSiguienteJuego()
+        {
+            var disponibles = ListaEspera.Where(j => j.HaPagado).ToList();
+
+            if (disponibles.Count < 5)
+            {
+                await App.Current.MainPage.DisplayAlert("Faltan jugadores", "Necesitas al menos 5 personas pagadas para que entre un equipo.", "OK");
+                return;
+            }
+
         }
     }
 }
