@@ -21,6 +21,8 @@ namespace BasketManager
     		builder.Logging.AddDebug();
 #endif
             builder.Services.AddSingleton<BasketManager.Services.DatabaseService>();
+            builder.Services.AddSingleton<BasketManager.ViewModels.MainViewModel>();
+            builder.Services.AddSingleton<BasketManager.MainPage>();
             return builder.Build();
         }
     }

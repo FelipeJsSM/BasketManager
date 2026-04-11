@@ -43,6 +43,13 @@
                             </SwipeView.RightItems>
 
                             <Border Style="{StaticResource CardStyle}" Margin="0,5">
+                                <FlyoutBase.ContextFlyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem Text="Eliminar Jugador" 
+                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EliminarJugadorCommand}"
+                            CommandParameter="{Binding .}" />
+                                    </MenuFlyout>
+                                </FlyoutBase.ContextFlyout>
                                 <Grid ColumnDefinitions="*, Auto">
                                     <Label Text="{Binding Nombre}" VerticalOptions="Center" FontAttributes="Bold" />
                                     <BoxView Grid.Column="1" 
