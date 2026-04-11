@@ -29,7 +29,10 @@ x86/
 [Aa][Rr][Mm]64/
 [Aa][Rr][Mm]64[Ee][Cc]/
 bld/
+<<<<<<< HEAD
 [Bb]in/
+=======
+>>>>>>> 71d1143e4aac6ee8cefeb652c6422c130788cc96
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
@@ -416,4 +419,8 @@ FodyWeavers.xsd
 *.msi
 *.msix
 *.msm
+<<<<<<< HEAD
 *.msp
+=======
+*.msp
+>>>>>>> 71d1143e4aac6ee8cefeb652c6422c130788cc96
