@@ -1,12 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SQLite;
 
 namespace BasketManager.Models
 {
-    internal class Jugador
+    public class Jugador
     {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [MaxLength(100)]
+        public string Nombre { get; set; }
+
+        public bool HaPagado { get; set; }
+
+        public DateTime HoraRegistro { get; set; }
+
+        public int VictoriasConsecutivas { get; set; }
+
+        public bool EstaEnCancha { get; set; }
+        public bool EsGanador { get; set; }
+
+        [Ignore]
+        public string StatusColor => HaPagado ? "#1DB954" : "#FF0000";
     }
 }
