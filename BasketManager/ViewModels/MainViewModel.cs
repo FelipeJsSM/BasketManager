@@ -1,25 +1,28 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using BasketManager.Models; // Asegúrate de que este sea el nombre de tu proyecto
+using BasketManager.Models; 
 using BasketManager.Services;
 using System.Collections.ObjectModel;
 
 namespace BasketManager.ViewModels
 {
-    // La clase debe ser 'partial' para que el generador trabaje
     public partial class MainViewModel : ObservableObject
     {
         private readonly DatabaseService _db;
 
         public ObservableCollection<Jugador> ListaEspera { get; set; } = new();
 
-        // Al usar '_', el generador crea automáticamente 'EquipoGanadorEspera' (con E mayúscula)
         [ObservableProperty]
         private Jugador? _equipoGanadorEspera;
 
-        // Al usar '_', el generador crea automáticamente 'EstaEnModoClasificatorio' (con E mayúscula)
         [ObservableProperty]
         private bool _estaEnModoClasificatorio;
+
+        [ObservableProperty]
+        private string _nombreNuevo = string.Empty;
+
+        [ObservableProperty]
+        private bool _haPagadoNuevo;
 
         public MainViewModel(DatabaseService db)
         {
@@ -28,9 +31,34 @@ namespace BasketManager.ViewModels
         }
 
         [RelayCommand]
+        public async Task AgregarJugador()
+        {
+            if (string.IsNullOrWhiteSpace(NombreNuevo)) return;
+
+            var nuevo = new Jugador
+            {
+                Nombre = NombreNuevo,
+                HaPagado = HaPagadoNuevo,
+                HoraRegistro = DateTime.Now 
+            };
+
+            await _db.SaveJugadorAsync(nuevo);
+
+            NombreNuevo = string.Empty;
+            HaPagadoNuevo = false;
+            await CargarJugadores();
+        }
+
+        [RelayCommand]
+        public async Task EliminarJugador(Jugador jugador)
+        {
+            await _db.DeleteJugadorAsync(jugador);
+            await CargarJugadores();
+        }
+
+        [RelayCommand]
         public async Task FinalizarJuego(bool ganoEquipoA)
         {
-            // Placeholder para que compile, luego pondremos la lógica real
             Jugador tempGanador = new Jugador { Nombre = "Ganador" };
 
             if (tempGanador.VictoriasConsecutivas == 2)
