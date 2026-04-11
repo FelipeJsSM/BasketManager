@@ -1,0 +1,65 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:viewmodels="clr-namespace:BasketManager.ViewModels"
+             xmlns:models="clr-namespace:BasketManager.Models"
+             x:Class="BasketManager.CanchaPage"
+             x:DataType="viewmodels:MainViewModel"
+             Title="Control de Cancha">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <x:Boolean x:Key="TrueValue">True</x:Boolean>
+            <x:Boolean x:Key="FalseValue">False</x:Boolean>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto, *, Auto" Padding="20" RowSpacing="15">
+        <Label Text="Control de Cancha" Style="{StaticResource TitleStyle}" HorizontalOptions="Center" />
+        
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20">
+                <Border Stroke="Blue" StrokeThickness="2" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="EQUIPO AZUL" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <CollectionView ItemsSource="{Binding EquipoA}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Jugador">
+                                    <Label Text="{Binding Nombre}" Margin="5,0" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <Button Text="¡GANÓ AZUL!" 
+        Command="{Binding FinalizarJuegoCommand}" 
+        CommandParameter="{StaticResource TrueValue}" 
+        BackgroundColor="Blue" />
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <Label Text="VS" FontSize="30" FontAttributes="Bold" HorizontalOptions="Center" />
+
+                <Border Stroke="Red" StrokeThickness="2" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="5">
+                        <Label Text="EQUIPO ROJO" FontAttributes="Bold" HorizontalOptions="Center" />
+                        <CollectionView ItemsSource="{Binding EquipoB}">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate x:DataType="models:Jugador">
+                                    <Label Text="{Binding Nombre}" Margin="5,0" />
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                        <Button Text="¡GANÓ ROJO!" 
+        Command="{Binding FinalizarJuegoCommand}" 
+        CommandParameter="{StaticResource FalseValue}" 
+        BackgroundColor="Red" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Button Grid.Row="2" 
+                Text="INICIAR LIGA (SUBIR 10)" 
+                Command="{Binding IniciarSiguienteJuegoCommand}" 
+                Style="{StaticResource PrimaryButtonStyle}" />
+    </Grid>
+</ContentPage>

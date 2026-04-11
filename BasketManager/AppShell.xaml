@@ -11,4 +11,13 @@
         ContentTemplate="{DataTemplate local:MainPage}"
         Route="MainPage" />
 
+    <TabBar>
+        <Tab Title="Registro" Icon="resource_registro.png">
+            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        </Tab>
+        <Tab Title="Cancha" Icon="resource_basket.png">
+            <ShellContent ContentTemplate="{DataTemplate local:CanchaPage}" />
+        </Tab>
+    </TabBar>
+
 </Shell>
