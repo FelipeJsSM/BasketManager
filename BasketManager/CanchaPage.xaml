@@ -30,9 +30,9 @@
                         </CollectionView>
                         <Button Text="¡GANÓ AZUL!" 
         Command="{Binding FinalizarJuegoCommand}" 
-        CommandParameter="{StaticResource TrueValue}" 
+        CommandParameter="{x:Boolean True}" 
+        IsEnabled="{Binding HayJuegoActivo}" 
         BackgroundColor="Blue" />
-
                     </VerticalStackLayout>
                 </Border>
 
@@ -50,16 +50,17 @@
                         </CollectionView>
                         <Button Text="¡GANÓ ROJO!" 
         Command="{Binding FinalizarJuegoCommand}" 
-        CommandParameter="{StaticResource FalseValue}" 
+        CommandParameter="{x:Boolean False}" 
+        IsEnabled="{Binding HayJuegoActivo}" 
         BackgroundColor="Red" />
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>
         </ScrollView>
 
-        <Button Grid.Row="2" 
-                Text="INICIAR LIGA (SUBIR 10)" 
-                Command="{Binding IniciarSiguienteJuegoCommand}" 
-                Style="{StaticResource PrimaryButtonStyle}" />
+        <Button Text="REINICIAR TODO (LIMPIAR CANCHA)" 
+        Command="{Binding ReiniciarCanchaCommand}" 
+        BackgroundColor="DarkRed" 
+        Margin="0,5" />
     </Grid>
 </ContentPage>

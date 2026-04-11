@@ -7,62 +7,61 @@
              x:DataType="viewmodels:MainViewModel"
              Title="Basket Manager">
 
-    <VerticalStackLayout
-            Padding="30,0"
-            Spacing="25">
-        <Grid RowDefinitions="Auto, *" Padding="20" RowSpacing="20">
+    <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="15">
 
-            <Border Grid.Row="0" Style="{StaticResource CardStyle}">
-                <VerticalStackLayout Spacing="15">
-                    <Label Text="Anotar Jugador Nuevo" Style="{StaticResource TitleStyle}" />
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,20">
+            <VerticalStackLayout Spacing="15">
+                <Label Text="Anotar Jugador Nuevo" Style="{StaticResource TitleStyle}" />
 
-                    <Entry Text="{Binding NombreNuevo}" Placeholder="Nombre completo" />
+                <Entry Text="{Binding NombreNuevo}" Placeholder="Nombre del jugador" />
 
-                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
-                        <Label Text="¿Pagó la liga?" VerticalOptions="Center" />
-                        <CheckBox IsChecked="{Binding HaPagadoNuevo}" />
-                    </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="15" VerticalOptions="Center">
+                    <Label Text="¿Pagó la liga?" VerticalOptions="Center" />
+                    <CheckBox IsChecked="{Binding HaPagadoNuevo}" Color="MediumSeaGreen" />
+                </HorizontalStackLayout>
 
-                    <Button Text="Anotar en Lista" 
-                    Command="{Binding AgregarJugadorCommand}"
-                    Style="{StaticResource PrimaryButtonStyle}" />
-                </VerticalStackLayout>
-            </Border>
+                <Button Text="ANOTAR EN LISTA" 
+                Command="{Binding AgregarJugadorCommand}"
+                Style="{StaticResource PrimaryButtonStyle}" />
+            </VerticalStackLayout>
+        </Border>
 
-            <CollectionView Grid.Row="1" ItemsSource="{Binding ListaEspera}">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:Jugador">
-                        <SwipeView>
-                            <SwipeView.RightItems>
-                                <SwipeItems>
-                                    <SwipeItem Text="Eliminar" 
-                                       BackgroundColor="Red"
-                                       Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EliminarJugadorCommand}"
-                                       CommandParameter="{Binding .}" />
-                                </SwipeItems>
-                            </SwipeView.RightItems>
+        <!--<Button Grid.Row="0" Text="Cargar 20 Jugadores de Prueba" 
+            Command="{Binding GenerarSeedDataCommand}" 
+            BackgroundColor="Gray" Margin="0,0,0,10" />-->
 
-                            <Border Style="{StaticResource CardStyle}" Margin="0,5">
-                                <FlyoutBase.ContextFlyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="Eliminar Jugador" 
-                            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EliminarJugadorCommand}"
-                            CommandParameter="{Binding .}" />
-                                    </MenuFlyout>
-                                </FlyoutBase.ContextFlyout>
-                                <Grid ColumnDefinitions="*, Auto">
-                                    <Label Text="{Binding Nombre}" VerticalOptions="Center" FontAttributes="Bold" />
-                                    <BoxView Grid.Column="1" 
-                                     Color="{Binding StatusColor}" 
-                                     WidthRequest="15" HeightRequest="15" 
-                                     CornerRadius="7.5" VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
-                        </SwipeView>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-        </Grid>
-    </VerticalStackLayout>
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}">
+        </Border>
 
+        <CollectionView Grid.Row="2" ItemsSource="{Binding ListaEspera}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Jugador">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,8" BackgroundColor="#2A2A2A" Padding="15,10">
+                        <Grid ColumnDefinitions="*, 45, 45, 15" ColumnSpacing="10">
+
+                            <Label Text="{Binding Nombre}" 
+           VerticalOptions="Center" FontAttributes="Bold" 
+           TextColor="White" LineBreakMode="TailTruncation" />
+
+                            <Button Grid.Column="1" Text="💵" 
+            BackgroundColor="Transparent" 
+            FontSize="22" HeightRequest="40" Padding="0"
+            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=AlternarPagoJugadorCommand}"
+            CommandParameter="{Binding .}"/>
+
+                            <Button Grid.Column="2" Text="🗑" 
+            BackgroundColor="Transparent" TextColor="#ff4d4d" 
+            FontSize="22" HeightRequest="40" Padding="0"
+            Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=EliminarJugadorCommand}"
+            CommandParameter="{Binding .}"/>
+
+                            <BoxView Grid.Column="3" Color="{Binding StatusColor}" 
+             WidthRequest="12" HeightRequest="12" 
+             CornerRadius="6" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
 </ContentPage>

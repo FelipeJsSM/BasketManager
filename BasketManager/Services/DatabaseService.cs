@@ -12,7 +12,7 @@ namespace BasketManager.Services
             if (_database is not null)
                 return;
 
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "LaLiga.db3");
+            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "Prueba20.db3");
 
             _database = new SQLiteAsyncConnection(dbPath);
 

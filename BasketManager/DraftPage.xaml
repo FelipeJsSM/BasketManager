@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:models="clr-namespace:BasketManager.Models"
+             xmlns:viewmodels="clr-namespace:BasketManager.ViewModels"
+             x:Class="BasketManager.DraftPage"
+             Title="Draft: Armando Equipos">
+
+    <Shell.NavBarIsVisible>False</Shell.NavBarIsVisible>
+
+    <Grid RowDefinitions="Auto, *" Padding="20">
+
+        <VerticalStackLayout Grid.Row="0" Margin="0,0,0,20" Spacing="5">
+            <Label Text="Sala de Draft" FontSize="28" FontAttributes="Bold" HorizontalOptions="Center" />
+            <Label Text="Elige a los equipos o salta a los que no van a jugar ahora." HorizontalOptions="Center" TextColor="Gray" Margin="0,0,0,15" />
+
+            <Button Text="LLAMAR JUGADORES A LA SALA" 
+            Command="{Binding PrepararDraftCommand}" 
+            BackgroundColor="MediumSeaGreen" 
+            FontAttributes="Bold" />
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding ListaDraft}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="models:Jugador">
+                    <Border Style="{StaticResource CardStyle}" Margin="0,8" BackgroundColor="#2A2A2A" Padding="15,10">
+                        <Grid ColumnDefinitions="*, 55, 55, 55" ColumnSpacing="15">
+
+                            <Label Text="{Binding Nombre}" VerticalOptions="Center" FontAttributes="Bold" TextColor="White" />
+
+                            <Button Grid.Column="1" Text="A" BackgroundColor="#0052cc" TextColor="White" CornerRadius="8" Padding="0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=MoverAEquipoACommand}" CommandParameter="{Binding .}"/>
+
+                            <Button Grid.Column="2" Text="B" BackgroundColor="#cc0000" TextColor="White" CornerRadius="8" Padding="0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=MoverAEquipoBCommand}" CommandParameter="{Binding .}"/>
+
+                            <Button Grid.Column="3" Text="⏭️" BackgroundColor="DarkOrange" TextColor="White" FontSize="18" CornerRadius="8" Padding="0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type viewmodels:MainViewModel}}, Path=SaltarJugadorDraftCommand}" CommandParameter="{Binding .}"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

@@ -6,17 +6,19 @@
     xmlns:local="clr-namespace:BasketManager"
     Title="BasketManager">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
-
     <TabBar>
-        <Tab Title="Registro" Icon="resource_registro.png">
-            <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+        <Tab Title="Registro">
+            <ShellContent 
+                ContentTemplate="{DataTemplate local:MainPage}" 
+                Route="MainPage" />
         </Tab>
-        <Tab Title="Cancha" Icon="resource_basket.png">
-            <ShellContent ContentTemplate="{DataTemplate local:CanchaPage}" />
+
+        <Tab Title="Draft">
+            <ShellContent ContentTemplate="{DataTemplate local:DraftPage}" Route="DraftPage" />
+        </Tab>
+
+        <Tab Title="Cancha">
+            <ShellContent ContentTemplate="{DataTemplate local:CanchaPage}" Route="CanchaPage" />
         </Tab>
     </TabBar>
 

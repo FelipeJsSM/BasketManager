@@ -23,6 +23,8 @@ namespace BasketManager
             builder.Services.AddSingleton<BasketManager.Services.DatabaseService>();
             builder.Services.AddSingleton<BasketManager.ViewModels.MainViewModel>();
             builder.Services.AddSingleton<BasketManager.MainPage>();
+            builder.Services.AddSingleton<CanchaPage>();
+            builder.Services.AddTransient<DraftPage>();
             return builder.Build();
         }
     }
