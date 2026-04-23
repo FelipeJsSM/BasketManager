@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Maui;
+﻿using BasketManager.Services;
+using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 
 namespace BasketManager
@@ -22,6 +23,7 @@ namespace BasketManager
 #endif
             builder.Services.AddSingleton<BasketManager.Services.DatabaseService>();
             builder.Services.AddSingleton<BasketManager.ViewModels.MainViewModel>();
+            builder.Services.AddSingleton<IDialogService, DialogService>();
             builder.Services.AddSingleton<BasketManager.MainPage>();
             builder.Services.AddSingleton<CanchaPage>();
             builder.Services.AddTransient<DraftPage>();

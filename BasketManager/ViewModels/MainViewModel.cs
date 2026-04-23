@@ -14,6 +14,7 @@ namespace BasketManager.ViewModels
         public ObservableCollection<Jugador> EquipoA { get; set; } = new();
         public ObservableCollection<Jugador> EquipoB { get; set; } = new();
         public ObservableCollection<Jugador> EquipoCampeonEspera { get; set; } = new();
+        private readonly IDialogService _dialog;
         public bool HayJuegoActivo => EquipoA.Count == 5 && EquipoB.Count == 5;
 
         public ObservableCollection<Jugador> ListaDraft { get; set; } = new();
@@ -22,10 +23,39 @@ namespace BasketManager.ViewModels
         [ObservableProperty] private bool _haPagadoNuevo;
         [ObservableProperty] private bool _isBusy;
 
-        public MainViewModel(DatabaseService db)
+        public MainViewModel(DatabaseService db, IDialogService dialog)
         {
             _db = db;
+            _dialog = dialog;
+
+            EquipoA.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HayJuegoActivo));
+            EquipoB.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HayJuegoActivo));
+
             _ = CargarJugadores();
+        }
+
+        [RelayCommand]
+        public async Task LimpiarLigaCompleta()
+        {
+            bool confirmar = await _dialog.ShowConfirmAsync(
+                "Confirmar limpieza",
+                "¿Estás seguro de que quieres borrar todos los jugadores y resultados? Esta acción no se puede deshacer.",
+                "Sí, borrar todo",
+                "No, cancelar"
+            );
+
+            if (!confirmar) return;
+
+            await _db.ClearAllAsync();
+
+            EquipoA.Clear();
+            EquipoB.Clear();
+            EquipoCampeonEspera.Clear();
+            ListaDraft.Clear();
+            ListaEspera.Clear();
+
+            await CargarJugadores();
+            await _dialog.ShowAlertAsync("Listo", "Liga completamente reiniciada.", "OK");
         }
 
         private async Task CargarJugadores()
@@ -36,11 +66,9 @@ namespace BasketManager.ViewModels
             var idsCampeon = EquipoCampeonEspera.Select(c => c.Id).ToList();
 
             var enEspera = lista.Where(j => !j.EstaEnCancha && !idsCampeon.Contains(j.Id))
-                                .OrderBy(j => j.HoraRegistro).ToList(); // .ToList() para poder iterar seguro
+                                .OrderBy(j => j.HoraRegistro).ToList();
 
             foreach (var j in enEspera) ListaEspera.Add(j);
-
-            OnPropertyChanged(nameof(HayJuegoActivo));
         }
 
         [RelayCommand]
@@ -64,25 +92,8 @@ namespace BasketManager.ViewModels
 
             if (ListaDraft.Count == 0 && totalRequeridos > 0)
             {
-                await App.Current.MainPage.DisplayAlert("Aviso", "No hay jugadores con el pago al día para completar el draft.", "OK");
+                await _dialog.ShowAlertAsync("Aviso", "No hay jugadores con el pago al día para completar el draft.", "OK");
             }
-        }
-
-        [RelayCommand]
-        public async Task IniciarDraft()
-        {
-            ListaDraft.Clear();
-
-            var lista = await _db.GetJugadoresAsync();
-            var idsCampeon = EquipoCampeonEspera.Select(c => c.Id).ToList();
-
-            var disponibles = lista.Where(j => !j.EstaEnCancha && !idsCampeon.Contains(j.Id))
-                                   .OrderBy(j => j.HoraRegistro)
-                                   .Take(10);
-
-            foreach (var j in disponibles) ListaDraft.Add(j);
-
-            await Shell.Current.GoToAsync("///DraftPage");
         }
 
         [RelayCommand]
@@ -131,7 +142,6 @@ namespace BasketManager.ViewModels
 
             if (ListaDraft.Contains(j)) ListaDraft.Remove(j);
 
-            OnPropertyChanged(nameof(HayJuegoActivo));
             await CargarJugadores(); 
         }
 
@@ -146,7 +156,6 @@ namespace BasketManager.ViewModels
 
             if (ListaDraft.Contains(j)) ListaDraft.Remove(j);
 
-            OnPropertyChanged(nameof(HayJuegoActivo));
             await CargarJugadores();
         }
 
@@ -157,86 +166,149 @@ namespace BasketManager.ViewModels
             try
             {
                 IsBusy = true;
-                var perdedores = ganoEquipoA ? EquipoB : EquipoA;
+
                 var ganadores = ganoEquipoA ? EquipoA : EquipoB;
+                var perdedores = ganoEquipoA ? EquipoB : EquipoA;
 
-                foreach (var p in perdedores)
+                if (ganadores.Count == 0) return;
+
+                var victoriasActuales = ganadores.FirstOrDefault()?.VictoriasConsecutivas ?? 0;
+                string decision = await EvaluarCampeon(victoriasActuales);
+
+                if (decision == "Abortar") return;
+
+                await ProcesarPerdedores(perdedores);
+
+                if (decision == "Sentar")
                 {
-                    p.EstaEnCancha = false;
-                    p.VictoriasConsecutivas = 0;
-                    p.HoraRegistro = DateTime.Now;
-                    await _db.SaveJugadorAsync(p);
-                }
-
-                var victorias = ganadores.FirstOrDefault()?.VictoriasConsecutivas ?? 0;
-                if (victorias + 1 >= 2)
-                {
-                    EquipoCampeonEspera.Clear();
-                    foreach (var g in ganadores)
-                    {
-                        g.EstaEnCancha = false;
-                        g.VictoriasConsecutivas = 0;
-                        await _db.SaveJugadorAsync(g);
-                        EquipoCampeonEspera.Add(g);
-                    }
-                    // Cuando el campeón gana 2 y se sienta...
-                    EquipoA.Clear();
-                    EquipoB.Clear();
-
-                    await App.Current.MainPage.DisplayAlert("Modo Campeón",
-        "El campeón se sienta. Elige manualmente a los 10 que van a jugar ahora.", "OK");
-
-                    // Lanza el Draft automáticamente
-                    await IniciarDraft();
+                    await ProcesarGanadoresCampeon(ganadores);
                 }
                 else
                 {
-                    foreach (var g in ganadores) g.VictoriasConsecutivas++;
-                    if (ganoEquipoA) EquipoB.Clear(); else EquipoA.Clear();
-
-                    if (EquipoCampeonEspera.Count == 5)
-                    {
-                        foreach (var c in EquipoCampeonEspera)
-                        {
-                            c.EstaEnCancha = true;
-                            if (EquipoA.Count < 5) EquipoA.Add(c); else EquipoB.Add(c);
-                            await _db.SaveJugadorAsync(c);
-                        }
-                        EquipoCampeonEspera.Clear();
-                    }
-                    else
-                    {
-                        await EntrarCincoNuevos();
-                    }
+                    bool ignorarRegla = decision == "Ignorar";
+                    await ProcesarGanadoresNormales(ganadores, ganoEquipoA, ignorarRegla);
                 }
+
                 await CargarJugadores();
             }
             finally { IsBusy = false; }
         }
 
-        private async Task EntrarCincoNuevos()
+        private async Task<string> EvaluarCampeon(int victoriasActuales)
         {
-            var proximos = ListaEspera.Where(j => j.HaPagado).Take(5).ToList();
+            if (victoriasActuales + 1 < 2) return "Normal";
 
-            bool rellenarA = EquipoA.Count == 0;
+            var todos = await _db.GetJugadoresAsync();
+            int totalPagados = todos.Count(j => j.HaPagado);
 
-            foreach (var j in proximos)
+            if (totalPagados >= 15) return "Sentar";
+
+            int faltantes = 15 - totalPagados;
+            string accion = await _dialog.ShowActionSheetAsync(
+                $"¡Atención! Faltan {faltantes} jugador(es) con pago al día para poder sentar al campeón (se necesitan 15 en total).",
+                null,
+                null,
+                "Cancelar — Voy a anotar más jugadores",
+                "Ignorar regla — Subir los 5 disponibles"
+            );
+
+            if (accion == "Cancelar — Voy a anotar más jugadores" || string.IsNullOrEmpty(accion))
             {
-                j.EstaEnCancha = true;
-                await _db.SaveJugadorAsync(j);
-                if (rellenarA) EquipoA.Add(j); else EquipoB.Add(j);
+                await Shell.Current.GoToAsync("///MainPage");
+                return "Abortar"; 
+            }
+
+            if (accion == "Ignorar regla — Subir los 5 disponibles")
+            {
+                await _dialog.ShowAlertAsync(
+                    "Regla ignorada",
+                    "Las victorias del campeón se reinician a 0. El perdedor va a la fila y suben los 5 disponibles.",
+                    "Entendido"
+                );
+                return "Ignorar";
+            }
+
+            return "Normal";
+        }
+
+        private async Task ProcesarGanadoresNormales(IEnumerable<Jugador> ganadores, bool ganoEquipoA, bool ignorarRegla)
+        {
+            foreach (var g in ganadores)
+            {
+                if (ignorarRegla) g.VictoriasConsecutivas = 0;
+                else g.VictoriasConsecutivas++;
+
+                await _db.SaveJugadorAsync(g);
+            }
+
+            if (ganoEquipoA) EquipoB.Clear();
+            else EquipoA.Clear();
+
+            if (EquipoCampeonEspera.Count == 5)
+            {
+                foreach (var c in EquipoCampeonEspera)
+                {
+                    c.EstaEnCancha = true;
+                    if (EquipoA.Count < 5) EquipoA.Add(c);
+                    else EquipoB.Add(c);
+                    await _db.SaveJugadorAsync(c);
+                }
+                EquipoCampeonEspera.Clear();
+            }
+            else
+            {
+                await PrepararDraft();
+                await Shell.Current.GoToAsync("///DraftPage");
             }
         }
 
-        [RelayCommand]
-        public async Task GenerarSeedData()
+        private async Task ProcesarGanadoresCampeon(IEnumerable<Jugador> ganadores)
         {
-            var nombres = new List<string> { "Felipe (P)", "Steven", "Carlos", "Roberto", "Isaac", "Juan", "Pedro", "Luis", "Miguel", "Jose", "Andres", "Diego", "Fernando", "Ricardo", "Javier", "Oscar", "Manuel", "Sergio", "Alex", "Darlin" };
-            foreach (var n in nombres)
+            EquipoCampeonEspera.Clear();
+            foreach (var g in ganadores)
             {
-                await _db.SaveJugadorAsync(new Jugador { Nombre = n, HaPagado = true, HoraRegistro = DateTime.Now.AddSeconds(nombres.IndexOf(n)) });
+                g.EstaEnCancha = false;
+                g.VictoriasConsecutivas = 0;
+                await _db.SaveJugadorAsync(g);
+                EquipoCampeonEspera.Add(g);
             }
-            await CargarJugadores();
+
+            EquipoA.Clear();
+            EquipoB.Clear();
+
+            await IniciarDraft();
+        }
+
+        [RelayCommand]
+        public async Task IniciarDraft()
+        {
+            ListaDraft.Clear();
+
+            var lista = await _db.GetJugadoresAsync();
+            var idsCampeon = EquipoCampeonEspera.Select(c => c.Id).ToList();
+
+            var disponibles = lista.Where(j => !j.EstaEnCancha && !idsCampeon.Contains(j.Id) && j.HaPagado) 
+                                   .OrderBy(j => j.HoraRegistro)
+                                   .Take(10);
+
+            foreach (var j in disponibles) ListaDraft.Add(j);
+
+            await Shell.Current.GoToAsync("///DraftPage");
+        }
+
+        private async Task ProcesarPerdedores(IEnumerable<Jugador> perdedores)
+        {
+            DateTime ahora = DateTime.Now;
+            var lista = perdedores.OrderBy(p => p.HoraRegistro).ToList();
+
+            for (int i = 0; i < lista.Count; i++)
+            {
+                var p = lista[i];
+                p.EstaEnCancha = false;
+                p.VictoriasConsecutivas = 0;
+                p.HoraRegistro = ahora.AddMilliseconds(i);
+                await _db.SaveJugadorAsync(p);
+            }
         }
 
         [RelayCommand]
@@ -265,6 +337,15 @@ namespace BasketManager.ViewModels
         [RelayCommand]
         public async Task EliminarJugador(Jugador j)
         {
+            bool confirmar = await _dialog.ShowConfirmAsync(
+                "Eliminar jugador",
+                $"¿Seguro que quieres eliminar a {j.Nombre} de la lista?",
+                "Sí, eliminar",
+                "Cancelar"
+            );
+
+            if (!confirmar) return;
+
             await _db.DeleteJugadorAsync(j);
             await CargarJugadores();
         }
@@ -272,7 +353,8 @@ namespace BasketManager.ViewModels
         [RelayCommand]
         public async Task ReiniciarCancha()
         {
-            bool confirmar = await App.Current.MainPage.DisplayAlert("Reiniciar", "¿Quieres vaciar la cancha y mandar a todos a espera?", "Sí", "No");
+            bool confirmar = await _dialog.ShowConfirmAsync("Reiniciar", "¿Quieres vaciar la cancha y mandar a todos a espera?", "Sí", "No");
+
             if (!confirmar) return;
 
             EquipoA.Clear();
@@ -288,37 +370,7 @@ namespace BasketManager.ViewModels
             }
 
             await CargarJugadores();
-            await App.Current.MainPage.DisplayAlert("Listo", "Cancha vacía.", "OK");
-        }
-
-        [RelayCommand]
-        public async Task IniciarSiguienteJuego()
-        {
-            EquipoA.Clear();
-            EquipoB.Clear();
-
-            var disponibles = ListaEspera.Where(j => j.HaPagado).Take(10).ToList();
-
-            if (disponibles.Count < 5)
-            {
-                await App.Current.MainPage.DisplayAlert("Faltan jugadores", "Necesitas al menos 5 personas pagadas para que entre un equipo.", "OK");
-                return;
-            }
-
-            EquipoA.Clear();
-            EquipoB.Clear();
-
-            for (int i = 0; i < disponibles.Count; i++)
-            {
-                var j = disponibles[i];
-                j.EstaEnCancha = true;
-                await _db.SaveJugadorAsync(j);
-
-                if (i < 5) EquipoA.Add(j);
-                else EquipoB.Add(j);
-            }
-
-            await CargarJugadores();
+            await _dialog.ShowAlertAsync("Listo", "Cancha vacía.", "OK");
         }
     }
 }

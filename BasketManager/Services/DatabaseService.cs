@@ -6,17 +6,25 @@ namespace BasketManager.Services
     public class DatabaseService
     {
         private SQLiteAsyncConnection _database;
+        private SemaphoreSlim _initLock = new(1, 1);
 
         async Task Init()
         {
-            if (_database is not null)
-                return;
+            if (_database is not null) return;
 
-            var dbPath = Path.Combine(FileSystem.AppDataDirectory, "Prueba20.db3");
+            await _initLock.WaitAsync();
+            try
+            {
+                if (_database is not null) return;
 
-            _database = new SQLiteAsyncConnection(dbPath);
-
-            await _database.CreateTableAsync<Jugador>();
+                var dbPath = Path.Combine(FileSystem.AppDataDirectory, "Prueba21.db3");
+                _database = new SQLiteAsyncConnection(dbPath);
+                await _database.CreateTableAsync<Jugador>();
+            }
+            finally
+            {
+                _initLock.Release();
+            }
         }
 
         public async Task<List<Jugador>> GetJugadoresAsync()
